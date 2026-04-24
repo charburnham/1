@@ -2,9 +2,13 @@
 // Self-paced reading task
 // Breheny, Katsos & Williams (2006)
 
+const showDataTable = false;
+
 const jsPsych = initJsPsych({
   on_finish: function () {
-    jsPsych.data.displayData("csv");
+    if (showDataTable) {
+      jsPsych.data.displayData("csv");
+    }
   }
 });
 
@@ -12,6 +16,7 @@ const subject_id = jsPsych.randomization.randomID(10);
 const filename = `${subject_id}.csv`;
 const dataPipeExperimentId = "b8FwOrsWMeXQ";
 const osfProjectId = "7f3k2";
+const osfDataComponentId = "gk4zj";
 
 // --- Latin square assignment ---
 // Randomly assign participant to one of 3 lists
@@ -21,7 +26,8 @@ jsPsych.data.addProperties({
   subject_id: subject_id,
   filename: filename,
   list: listNumber,
-  osf_project: osfProjectId
+  osf_project: osfProjectId,
+  osf_data_component: osfDataComponentId
 });
 
 // Assign conditions to items using Latin square
@@ -276,7 +282,8 @@ const debrief = {
         <h2>Experiment Complete</h2>
         <p>Thank you for your participation!</p>
         <p>You answered <strong>${correct}</strong> out of <strong>${total}</strong> comprehension questions correctly (${pct}%).</p>
-        <p>Press <strong>Space</strong> to see your data.</p>
+        <p>Press <strong>Space</strong> to upload your data.</p>
+        <p>Please do not close this page until you see the final confirmation screen.</p>
       </div>
     `;
   },
@@ -288,7 +295,49 @@ const save_data = {
   action: "save",
   experiment_id: dataPipeExperimentId,
   filename: filename,
-  data_string: () => jsPsych.data.get().csv()
+  data_string: () => jsPsych.data.get().csv(),
+  wait_message: `
+    <div class="instructions">
+      <h2>Uploading Data</h2>
+      <p>Your responses are being uploaded to OSF through DataPipe.</p>
+      <p>Please do not close this page.</p>
+    </div>
+  `,
+  data: {
+    task: "save_data"
+  }
+};
+
+const saveStatusScreen = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: function () {
+    const saveTrial = jsPsych.data.get().filter({ task: "save_data" }).last(1).values()[0];
+
+    if (saveTrial?.success) {
+      return `
+        <div class="instructions">
+          <h2>Upload Complete</h2>
+          <p>Your data were saved successfully.</p>
+          <p>Participant file: <strong>${filename}</strong></p>
+          <p>You may now close this page.</p>
+        </div>
+      `;
+    }
+
+    const errorCode = saveTrial?.result?.error || "UNKNOWN_ERROR";
+    const errorMessage = saveTrial?.result?.message || "No success response was returned by DataPipe.";
+
+    return `
+      <div class="instructions">
+        <h2>Upload Failed</h2>
+        <p>DataPipe did not confirm a successful upload.</p>
+        <p><strong>Error code:</strong> ${errorCode}</p>
+        <p><strong>Message:</strong> ${errorMessage}</p>
+        <p>Please take a screenshot of this page before closing it.</p>
+      </div>
+    `;
+  },
+  choices: [" "]
 };
 
 // --- Run experiment ---
@@ -304,5 +353,6 @@ const timeline = [
 ];
 
 timeline.push(save_data);
+timeline.push(saveStatusScreen);
 
 jsPsych.run(timeline);

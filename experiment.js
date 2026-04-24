@@ -3,6 +3,7 @@
 // Breheny, Katsos & Williams (2006)
 
 const showDataTable = false;
+const sessionTimestamp = Date.now();
 
 const jsPsych = initJsPsych({
   on_finish: function () {
@@ -13,7 +14,7 @@ const jsPsych = initJsPsych({
 });
 
 const subject_id = jsPsych.randomization.randomID(10);
-const filename = `${subject_id}.csv`;
+const filename = `${subject_id}-${sessionTimestamp}.csv`;
 const dataPipeExperimentId = "b8FwOrsWMeXQ";
 const osfProjectId = "7f3k2";
 const osfDataComponentId = "gk4zj";
@@ -25,6 +26,7 @@ const listNumber = Math.floor(Math.random() * 3);
 jsPsych.data.addProperties({
   subject_id: subject_id,
   filename: filename,
+  session_timestamp: sessionTimestamp,
   list: listNumber,
   osf_project: osfProjectId,
   osf_data_component: osfDataComponentId
@@ -61,7 +63,8 @@ function buildReadingTrials(item, conditionData, itemId, condition, isCritical) 
         trial_duration: 1000,
         data: {
           task: "sentence_break",
-          item_id: itemId
+          item_id: itemId,
+          trial_type: "html-keyboard-response"
         }
       });
       continue;
@@ -86,7 +89,8 @@ function buildReadingTrials(item, conditionData, itemId, condition, isCritical) 
         segment_index: i,
         segment_role: segmentRole,
         is_critical: isCritical,
-        list: listNumber
+        list: listNumber,
+        trial_type: "html-keyboard-response"
       }
     });
   }
@@ -111,7 +115,8 @@ function buildQuestionTrial(question, itemId) {
         task: "comprehension",
         item_id: itemId,
         correct_answer: question.correct,
-        question_text: question.text
+        question_text: question.text,
+        trial_type: "html-keyboard-response"
       },
       on_finish: function (data) {
         const response = data.response;
@@ -134,7 +139,11 @@ const welcomeScreen = {
       <p>Press <strong>Space</strong> to continue.</p>
     </div>
   `,
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "welcome",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 const instructionsScreen = {
@@ -155,7 +164,11 @@ const instructionsScreen = {
       <p>Press <strong>Space</strong> to start the practice.</p>
     </div>
   `,
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "instructions",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 // --- Build practice block ---
@@ -184,7 +197,11 @@ const endPractice = {
       <p>Press <strong>Space</strong> to start the experiment.</p>
     </div>
   `,
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "end_practice",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 // --- Build experimental block ---
@@ -264,7 +281,11 @@ const restBreak = {
       <p>When you are ready to continue, press <strong>Space</strong>.</p>
     </div>
   `,
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "rest_break",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 const secondBlock = buildTrialBlock(secondHalf);
@@ -287,7 +308,11 @@ const debrief = {
       </div>
     `;
   },
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "debrief",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 const save_data = {
@@ -304,7 +329,8 @@ const save_data = {
     </div>
   `,
   data: {
-    task: "save_data"
+    task: "save_data",
+    trial_type: "pipe-save"
   }
 };
 
@@ -337,7 +363,11 @@ const saveStatusScreen = {
       </div>
     `;
   },
-  choices: [" "]
+  choices: [" "],
+  data: {
+    task: "save_status",
+    trial_type: "html-keyboard-response"
+  }
 };
 
 // --- Run experiment ---
